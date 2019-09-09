@@ -1,6 +1,7 @@
 #coding=utf-8
-import json, smtplib
+import json
 import pika
+import smtplib
 
 
 # 定义回调函数

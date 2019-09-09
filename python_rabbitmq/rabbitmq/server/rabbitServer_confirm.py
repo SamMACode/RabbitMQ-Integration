@@ -1,5 +1,6 @@
 #coding=utf-8
-import pika, sys
+import pika
+import sys
 from pika import spec
 
 credentials = pika.PlainCredentials("guest", "guest")

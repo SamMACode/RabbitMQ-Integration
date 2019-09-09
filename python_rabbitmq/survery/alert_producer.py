@@ -1,5 +1,6 @@
 #coding=utf-8
-import json, pika
+import json
+import pika
 from optparse import OptionParser
 
 opt_parser = OptionParser()

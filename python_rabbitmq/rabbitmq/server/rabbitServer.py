@@ -1,5 +1,6 @@
 #coding=utf-8
-import pika, sys
+import pika
+import sys
 
 credentials = pika.PlainCredentials("guest", "guest")
 conn_params = pika.ConnectionParameters("localhost", credentials=credentials)
