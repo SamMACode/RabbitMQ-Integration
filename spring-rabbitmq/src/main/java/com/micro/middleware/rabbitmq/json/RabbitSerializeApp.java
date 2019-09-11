@@ -18,10 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
 
-import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -36,9 +36,11 @@ public class RabbitSerializeApp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RabbitSerializeApp.class);
 
-	public static void main(String[] args) {
-		SpringApplication.run(RabbitSerializeApp.class, args);
-	}
+	public static void main(String[] args) throws InterruptedException {
+        ConfigurableApplicationContext configContext = SpringApplication.run(RabbitSerializeApp.class, args);
+        configContext.getBean(RabbitSerializeApp.class).runJsonTransfer();
+        configContext.close();
+    }
 
     /**
      * define some rabbitmq message queue
@@ -60,7 +62,6 @@ public class RabbitSerializeApp {
 
     private volatile CountDownLatch latchDown = new CountDownLatch(2);
 
-    @PostConstruct
     public void runJsonTransfer() throws InterruptedException {
         String json = "{\"foo\" : \"value\"}";
         Message message = MessageBuilder.withBody(json.getBytes())
