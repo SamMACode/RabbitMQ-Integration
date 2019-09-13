@@ -1,9 +1,13 @@
 package com.micro.middleware.config;
 
+import com.micro.middleware.gateway.MarketDataGateway;
 import com.micro.middleware.gateway.StockServiceGateway;
+import com.micro.middleware.gateway.impl.MarketDataGatewayImpl;
 import com.micro.middleware.gateway.impl.StockServiceGatewayImpl;
 import com.micro.middleware.handler.ClientHandler;
 import com.micro.middleware.handler.ServerHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -17,6 +21,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.annotation.PostConstruct;
 
@@ -30,17 +36,17 @@ public class RabbitConfig {
     /**
      * 定义交换器信息,server端将stock股票消息发送到exchange交换器内
      */
-    public static final String MARKET_DATA_EXCHANGE_NAME = "app.stock.marketdata";
+    private static final String MARKET_DATA_EXCHANGE_NAME = "app.stock.marketdata";
 
     /**
      * 定义消息队列queue,客户端将请求的消息发送到queue中(server端定义用来接收请求)
      */
-    public static final String STOCK_REQUEST_QUEUE_NAME = "app.stock.request";
+    private static final String STOCK_REQUEST_QUEUE_NAME = "app.stock.request";
 
     /**
      * clients客户端会将用户的请求发送到<"config.stock.request>队列,并使用默认的路由routing key
      */
-    public static final String STOCK_REQUEST_ROUTING_KEY = STOCK_REQUEST_QUEUE_NAME;
+    private static final String STOCK_REQUEST_ROUTING_KEY = STOCK_REQUEST_QUEUE_NAME;
 
     /**
      * Server Side Profile Configuration
@@ -48,6 +54,8 @@ public class RabbitConfig {
     @Profile("server")
     @Configuration
     public static class ServerConfiguration {
+
+        private static final Logger LOGGER = LoggerFactory.getLogger(ServerConfiguration.class);
 
         @Autowired
         private MessageConverter jsonConverter;
@@ -61,8 +69,10 @@ public class RabbitConfig {
         @Autowired
         private RabbitTemplate rabbitTemplate;
 
-        @PostConstruct
         @Autowired
+        private MarketDataGateway marketDataGateway;
+
+        @PostConstruct
         protected void configureRabbitTemplate() {
             rabbitTemplate.setExchange(MARKET_DATA_EXCHANGE_NAME);
         }
@@ -92,6 +102,23 @@ public class RabbitConfig {
             container.setQueues(stockRequestQueue());
             container.setMessageListener(messageListenerAdapter());
             return container;
+        }
+
+        /**
+         * 定义MarketDataGateway实体类,会周期的fixedRate向消息队列发送消息.
+         * @param connectionFactory
+         * @return
+         */
+        @Bean
+        public MarketDataGateway marketDataGateway(ConnectionFactory connectionFactory) {
+            MarketDataGatewayImpl marketDataGateway = new MarketDataGatewayImpl();
+            marketDataGateway.setConnectionFactory(connectionFactory);
+            return marketDataGateway;
+        }
+
+        @Scheduled(cron = "0/5 * * * * ?")
+        public void scheduledMarketData() {
+            marketDataGateway.sendMarketData();
         }
 
     }

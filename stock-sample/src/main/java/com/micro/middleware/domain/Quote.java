@@ -1,8 +1,8 @@
 package com.micro.middleware.domain;
 
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.text.DateFormat;
 import java.util.Date;
 
@@ -11,7 +11,7 @@ import java.util.Date;
  * RabbitMQ Message Middleware Stock Quote entity
  */
 @Data
-public class Quote {
+public class Quote implements Serializable {
 
     public Quote(Stock stock, String price) {
         this.stock = stock;

@@ -3,10 +3,10 @@ package com.micro.middleware.gateway.impl;
 import com.micro.middleware.domain.Quote;
 import com.micro.middleware.domain.Stock;
 import com.micro.middleware.domain.StockExchange;
+import com.micro.middleware.gateway.MarketDataGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitGatewaySupport;
-import org.springframework.scheduling.annotation.Scheduled;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ import java.util.Random;
  * @author Sam Ma
  * Used for Send marketing stock relevant information
  */
-public class MarketDataGatewayImpl extends RabbitGatewaySupport implements com.micro.middleware.gateway.MarketDataGateway {
+public class MarketDataGatewayImpl extends RabbitGatewaySupport implements MarketDataGateway {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MarketDataGatewayImpl.class);
 
@@ -42,12 +42,11 @@ public class MarketDataGatewayImpl extends RabbitGatewaySupport implements com.m
         this.stocks.add(new MockStock("TM", StockExchange.nyse, 76));
     }
 
-    @Scheduled(fixedDelay = 3000)
     @Override
     public void sendMarketData() {
         Quote quote = generateFakeQuote();
         Stock stock = quote.getStock();
-        LOGGER.info("Sending market data for [{}]", stock.getTicker());
+        LOGGER.info("Sending market data for [{}] security ticket [{}] exchange", stock.getTicker(), stock.getExchange());
         String routingKey = "config.stock.quotes." + stock.getExchange() + "." + stock.getTicker();
         getRabbitOperations().convertAndSend(routingKey, quote);
     }

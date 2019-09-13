@@ -94,7 +94,7 @@ public class RestServletConfig {
     /**
      * define fanout Exchange and Topic Exchange
      */
-    @Bean
+    @Bean(name = "broadcast.responses")
     public FanoutExchange fanoutExchange() {
         return new FanoutExchange("broadcastExchange");
     }
